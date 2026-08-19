@@ -1,0 +1,64 @@
+# Python 
+__pycache__/ 
+*.pyc 
+*.pyo 
+*.pyd 
+.Python 
+*.so 
+*.egg 
+*.egg-info/ 
+dist/ 
+build/ 
+*.log 
+ECHO is on.
+# Virtual Environment 
+venv/ 
+env/ 
+ENV/ 
+.venv/ 
+ECHO is on.
+# IDE 
+.vscode/ 
+.idea/ 
+*.swp 
+*.swo 
+ECHO is on.
+# OS 
+.DS_Store 
+Thumbs.db 
+desktop.ini 
+ECHO is on.
+# Data files 
+*.csv 
+*.xlsx 
+!config.json 
+ECHO is on.
+# Large files 
+*.mp4 
+*.mov 
+*.avi 
+*.mkv 
+*.zip 
+*.tar.gz 
+*.7z 
+*.rar 
+*.exe 
+ECHO is on.
+# Logs 
+*.log 
+integrity_log.json 
+forensic_report.txt 
+forensic_validation_report.txt 
+ECHO is on.
+# Reports 
+baseline_validation_*.txt 
+similarity_report_*.txt 
+dji_summary_*.txt 
+drone_forensic_manual_*.txt 
+ECHO is on.
+# Screenshots and media 
+ScreenRecord/ 
+sample_screenshots/ 
+*.jpg 
+*.jpeg 
+*.png 

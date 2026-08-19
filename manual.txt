@@ -1,0 +1,187 @@
+                    DRONE FORENSIC FRAMEWORK USER MANUAL
+				
+Dodzi Gbordzi | KNUST MSc. Cyber Security & Digital Forensics
+
+1. INTRODUCTION
+===============
+This framework extracts flight data from PTD1 remote controller screenshots using OCR.
+It bypasses encrypted .fc2 log files that forensic tools cannot read.
+Features:
+- OCR extraction from screenshots (no manual typing)
+- SHA-256 integrity verification
+- Per-row hashing for individual flight records  
+- JSON config for multiple drone brands
+- GPS EXIF extraction from photos
+- Dual-Track Cross-Validation (Algorithm 3.3)
+
+2. INSTALLATION
+===============
+Requirements:
+- Windows 10/11, 8GB RAM
+- Python 3.10+
+- Tesseract OCR (separate install)
+Install Python libraries (run as Administrator):
+pip install opencv-python==4.8.0.74
+pip install pytesseract==0.3.10
+pip install numpy==1.24.3
+pip install pandas==2.0.1
+pip install Pillow==9.5.0
+Install Tesseract (CRITICAL - framework won't work without it):
+1. Download from: https://github.com/UB-Mannheim/tesseract/wiki
+2. Get: tesseract-ocr-w64-setup-5.3.0.exe
+3. Install to: C:\Program Files\Tesseract-OCR\
+Optional - ExifTool for GPS extraction:
+- Download from https://exiftool.org/
+- Place exiftool.exe in the framework folder
+
+3. HOW TO USE
+=============
+3.1 Capture PTD1 Screenshots
+The PTD1 has no physical buttons for screenshots. Use the drag-down gesture:
+1. Power on PTD1, go to Flight History screen
+2. Place finger at TOP edge of screen
+3. Drag straight down to bottom edge
+4. Screenshot preview appears - tap to save
+5. Transfer screenshots to PC via USB (MTP connection)
+Do NOT edit or rename screenshots before processing. SHA-256 hashes will detect
+any modification.
+
+3.2 Run the Framework
+From command prompt in the framework folder:
+python -m drone_forensics.main
+
+3.3 Select Input Method
+- "Extract from Screenshots (OCR)" - for PTD1 screenshots (recommended)
+- "Load Existing CSV File" - if you already have flight data
+
+3.4 Select Drone Model
+Choose from list or "Load from JSON File" for custom drones.
+To add a new drone, create a JSON file with field mappings (see section 5).
+
+3.5 Enter Case Info
+Case Number: e.g., DR-2026-001
+Examiner Name: Your name or badge number
+
+3.6 (Optional) Add Media Folder
+If you have photos/videos from the drone's SD card, select the folder.
+The framework will extract GPS coordinates and timestamps.
+
+3.7 Run Analysis
+Click ">> RUN FORENSIC ANALYSIS"
+Processing time:
+- 10 screenshots: ~30 seconds
+- 50 screenshots: ~2 minutes
+
+3.8 Review Results
+The dashboard shows:
+- Total flights, normal flights, aborted takeoffs
+- Total distance (km), total flight time (hours), max altitude (m)
+The table shows individual flights with date/time, duration, distance.
+
+3.9 Export Evidence
+Use the buttons on the right:
+- "Export Forensic Report" - text report
+- "Export Integrity Log" - JSON with SHA-256 hashes  
+- "Export CSV with Row Hashing" - CSV with per-row hashes
+- "Verify CSV Hashes" - validate exported CSV
+- "View Integrity Report" - display hash report
+
+3.10 Dual-Track Cross-Validation (Algorithm 3.3)
+After OCR extraction, validate flights against physical SD card media.
+WHAT IT DOES:
+- Extracts unique flight dates from OCR results (Track B)
+- Scans media folder for photos/videos (Track A)
+- Extracts original dates from EXIF metadata
+- Compares Track B dates against Track A dates
+- Generates forensic validation report
+WHY IT MATTERS:
+- Cryptographically verifies OCR extraction integrity
+- Eliminates UI spoofing or video tampering concerns
+- Carved JPEGs retain EXIF timestamps after file carving
+HOW TO RUN:
+1. Run OCR extraction first (Section 3.7)
+2. Click "Tools" menu → "Run Dual-Track Validation"
+3. Select your media folder (Track A - FTK extracted media)
+UNDERSTANDING RESULTS:
+VERIFIED MATCHES: Flight dates in BOTH OCR AND physical media
+STRUCTURAL ALERTS: OCR dates with no matching media (expected for flights without recording)
+
+4. UNDERSTANDING THE RESULTS
+============================
+Flight Classification:
+
+NORMAL: Distance > 0m AND Duration >= 2 minutes (actual flights)
+ABORTED: Distance = 0m AND Duration < 2 minutes (powered on, never took off)
+Aborted takeoffs may indicate:
+- Pilot hesitation
+- Mechanical issues  
+- GPS signal problems
+- Low battery
+- Security presence
+Accuracy (validated with 77 Potensic Atom 2 flights):
+- Flight detection: 100%
+- Per-flight perfect duration: 96.1% (74/77)
+- Total duration accuracy: 98.7%
+- Total distance accuracy: 99.6%
+
+5. ADDING NEW DRONE BRANDS
+==========================
+Create a JSON file (e.g., my_drone.json):
+{
+    "name": "Your Drone Model",
+    "key": "your_drone_key",
+    "file_type": "csv",
+    "field_mapping": {
+        "timestamp": "column_name_for_time",
+        "latitude": "column_name_for_lat",
+        "longitude": "column_name_for_lon",
+        "altitude": "column_name_for_alt",
+        "distance": "column_name_for_dist",
+        "battery": "column_name_for_battery",
+        "flight_id": "column_name_for_id"
+    }
+}
+Then select "Load from JSON File" in the GUI.
+
+6. SHA-256 INTEGRITY VERIFICATION
+=================================
+The framework computes SHA-256 hashes for:
+- Every screenshot before OCR
+- Every photo (if media folder provided)
+- EVERY ROW in exported CSV files
+- The CSV file itself
+This provides mathematical proof that evidence has not been altered.
+IMPORTANT: This is INTEGRITY VERIFICATION only, NOT full chain of custody.
+Full chain of custody requires tracking who handled evidence and when.
+Personnel tracking is outside the scope of this research.
+
+7. TROUBLESHOOTING
+==================
+"OCR libraries not installed"
+   Run: pip install opencv-python pytesseract pandas
+"Tesseract not found"
+   Ensure Tesseract is installed at: C:\Program Files\Tesseract-OCR\tesseract.exe
+   Or install to default location.
+No flights detected from screenshots
+   - Check screenshot quality (clear, in focus)
+   - Verify screenshots show the flight list table
+   - Move folder to simple path like C:\screenshots
+GPS extraction not working
+   - Download exiftool.exe from https://exiftool.org/
+   - Place in the same folder as the framework
+
+8. OUTPUT FILES
+===============
+forensic_report.txt              - Human-readable forensic report
+integrity_log.json               - SHA-256 hashes of all evidence
+flights_export_*.csv             - Flight logs with per-row hashes
+flights_export_*.hash.json       - Hash manifest for CSV verification
+forensic_validation_report.txt   - Dual-Track Validation report (Algorithm 3.3)
+
+9. CONTACT
+==========
+Dodzi Gbordzi
+KNUST, MSc. Cyber Security and Digital Forensics
+Email: dodzigbordzi@gmail.com
+       dgbordzi@st.knust.edu.gh
+Phone: +233 (0) 244 620 614
